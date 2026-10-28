@@ -1,0 +1,11 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/.features-gen/
+/tests/UI_test/SmokeTest_GWPC/test-data.json
+error-context.md

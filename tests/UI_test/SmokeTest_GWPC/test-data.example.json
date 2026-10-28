@@ -1,0 +1,11 @@
+{
+  "username": "REPLACE_WITH_TEST_USERNAME",
+  "password": "REPLACE_WITH_TEST_PASSWORD",
+  "commercialAuto": {
+    "account": {},
+    "policy": {},
+    "vehicle": {},
+    "driver": {},
+    "risk": {}
+  }
+}

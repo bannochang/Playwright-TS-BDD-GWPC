@@ -1,0 +1,5 @@
+{
+    "cucumberautocomplete.steps": ["tests/UI_test/SmokeTest_GWPC/features/Steps/smoke.steps.ts"],
+    "cucumber.features": ["tests/UI_test/SmokeTest_GWPC/features/**/*.feature"],
+    "cucumber.glue": ["tests/UI_test/SmokeTest_GWPC/features/Steps/**/*.steps.ts"]
+}
