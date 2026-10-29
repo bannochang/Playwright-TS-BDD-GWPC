@@ -8,9 +8,9 @@ Feature: Commercial Auto Policy Smoke Test
 
   @TC_CA_SMOKE_001
   Scenario: Create and issue a new Commercial Auto policy
+    Given I am logged in to Guidewire PolicyCenter
     When the user starts a new Commercial Auto submission
     And the user selects an effective date
-    And the user enters the commercial account details
     And the user enters the commercial account details
     And the user adds a vehicle with valid vehicle details
     And the user adds a driver with valid driver details
@@ -25,7 +25,8 @@ Feature: Commercial Auto Policy Smoke Test
 
   @TC_CA_SMOKE_002
   Scenario: Verify an issued Commercial Auto policy can be retrieved
-    Given a Commercial Auto policy has been issued successfully
+    Given I am logged in to Guidewire PolicyCenter
+    And a Commercial Auto policy has been issued successfully
     When the user searches for the policy using its policy number
     Then the policy should be displayed
     And the policy status should be "Issued"

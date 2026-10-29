@@ -1,11 +1,45 @@
+
 {
-  "username": "REPLACE_WITH_TEST_USERNAME",
-  "password": "REPLACE_WITH_TEST_PASSWORD",
-  "commercialAuto": {
-    "account": {},
-    "policy": {},
-    "vehicle": {},
-    "driver": {},
-    "risk": {}
+  "Login": {
+    "Username": "REPLACE_WITH_TEST_USERNAME",
+    "Password": "REPLACE_WITH_TEST_PASSWORD"
+  },
+  "AccountInfo": {
+    "AccountName": "QA Commercial Auto Test",
+    "OrganizationName": "QA Test Organization",
+    "AddressLine1": "100 Test Street",
+    "City": "Austin",
+    "State": "TX",
+    "PostalCode": "78701",
+    "Country": "US"
+  },
+  "PolicyInfo": {
+    "EffectiveDate": "2026-11-15",
+    "Product": "Commercial Auto"
+  },
+  "VehicleInfo": {
+    "VehicleType": "Truck",
+    "Year": "2024",
+    "Make": "Ford",
+    "Model": "F-150",
+    "VIN": "1FTFW1E50RFA12345"
+  },
+  "DriverInfo": {
+    "FirstName": "QA",
+    "LastName": "Driver",
+    "DateOfBirth": "1985-05-15",
+    "LicenseNumber": "QA123456",
+    "LicenseState": "TX"
+  },
+  "CoverageInfo": {
+    "LiabilityLimit": "100000/300000",
+    "CollisionDeductible": "1000",
+    "ComprehensiveDeductible": "500"
+  },
+  "UnderwritingInfo": {
+    "BusinessUse": "Yes"
+  },
+  "SearchInfo": {
+    "PolicyNumber": ""
   }
 }
