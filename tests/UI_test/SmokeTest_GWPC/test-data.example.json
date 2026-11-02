@@ -1,17 +1,31 @@
-
 {
   "Login": {
     "Username": "REPLACE_WITH_TEST_USERNAME",
     "Password": "REPLACE_WITH_TEST_PASSWORD"
   },
-  "AccountInfo": {
-    "AccountName": "QA Commercial Auto Test",
-    "OrganizationName": "QA Test Organization",
-    "AddressLine1": "100 Test Street",
-    "City": "Austin",
-    "State": "TX",
-    "PostalCode": "78701",
-    "Country": "US"
+  "Account": {
+    "SupportedTypes": [
+      "Company",
+      "Personal"
+    ],
+    "Company": {
+      "CompanyName": "QA Commercial Auto Test",
+      "OrganizationName": "QA Test Organization",
+      "AddressLine1": "100 Test Street",
+      "City": "Austin",
+      "State": "TX",
+      "PostalCode": "78701",
+      "Country": "US"
+    },
+    "Personal": {
+      "FirstName": "John",
+      "LastName": "Smith",
+      "AddressLine1": "200 Test Street",
+      "City": "Austin",
+      "State": "TX",
+      "PostalCode": "78701",
+      "Country": "US"
+    }
   },
   "PolicyInfo": {
     "EffectiveDate": "2026-11-15",

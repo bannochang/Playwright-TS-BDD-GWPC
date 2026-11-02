@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { expect } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
+import { AccountPage } from '../../pages/AccountPage';
+import { AccountLocators } from '../../locators/AccountLocators';
+
 
 
 const { Given, When, Then } = createBdd();
@@ -17,6 +20,13 @@ interface LoginTestData {
   Login: {
     Username: string;
     Password: string;
+  };
+}
+interface AccountTestData {
+  Account: {
+    Company: {
+      CompanyName: string;
+    };
   };
 }
 
@@ -73,7 +83,39 @@ async function loadLoginTestData(): Promise<LoginTestData> {
     },
   };
 }
+async function loadAccountTestData(): Promise<AccountTestData> {
+  const contents = await readFile(testDataPath, 'utf8');
+  const parsed: unknown = JSON.parse(contents);
 
+  if (!isRecord(parsed) || !isRecord(parsed.Account)) {
+    throw new Error('Invalid test data: Account section is missing.');
+  }
+
+  const account = parsed.Account;
+
+  if (!isRecord(account.Company)) {
+    throw new Error('Invalid test data: Account.Company section is missing.');
+  }
+
+  const company = account.Company;
+
+  if (
+    typeof company.CompanyName !== 'string' ||
+    !company.CompanyName.trim()
+  ) {
+    throw new Error(
+      'Invalid test data: Account.Company.CompanyName must be a non-empty string.',
+    );
+  }
+
+  return {
+    Account: {
+      Company: {
+        CompanyName: company.CompanyName,
+      },
+    },
+  };
+}
 
 function workflowStepPending(step: string): never {
   throw new Error(
@@ -97,6 +139,67 @@ Given('I am logged in to Guidewire PolicyCenter', async ({ page }) => {
   await expect(
     page.getByRole('button', { name: 'Log In', exact: true }),
   ).toBeHidden({ timeout: 60_000 });
+});
+
+When('the user opens the Account menu', async ({ page }) => {
+  const accountDropdown = page.locator(
+    '#TabBar-AccountTab > .gw-action--expand-button'
+  );
+  
+
+  await expect(accountDropdown).toHaveCount(1);
+  await expect(accountDropdown).toBeVisible();
+
+  await accountDropdown.click();
+
+  console.log('Account menu opened successfully.');
+  await page.waitForTimeout(2_000); // Wait for 2 seconds to ensure the menu is fully loaded
+
+  
+});
+When('the user selects New Account', async ({ page }) => {
+  const newAccount = page.locator(
+ '#TabBar-AccountTab-AccountTab_NewAccount > div > div.gw-label'
+  );
+
+
+  await expect(newAccount).toHaveCount(1);
+  await expect(newAccount).toBeVisible();
+
+  await newAccount.click();
+
+  console.log('New Account screen opened successfully.');
+
+  await page.pause();
+});
+When('the user enters the company name', async ({ page }) => {
+  const accountData = await loadAccountTestData();
+
+  const accountPage = new AccountPage(page);
+
+  await accountPage.enterCompanyName(
+    accountData.Account.Company.CompanyName
+  );
+
+  console.log(
+    'Company name entered:',
+    accountData.Account.Company.CompanyName
+  );
+});
+When('the user clicks the Search button', async ({ page }) => {
+  const accountPage = new AccountPage(page);
+
+  await accountPage.searchAccount();
+
+  console.log('Company account search initiated.');
+});
+When('the user selects Company Account', async ({ page }) => {
+  const accountPage = new AccountPage(page);
+
+  await accountPage.clickCreateAccount();
+  await accountPage.selectCompanyAccount();
+
+  console.log('Company Account selected successfully.');
 });
 
 When('the user starts a new Commercial Auto submission', async ({ }) =>
@@ -185,4 +288,13 @@ Then('the insured account details should be displayed', async ({ }) =>
 
 Then('the vehicle details should match the issued policy', async ({ }) =>
   workflowStepPending('the vehicle details should match the issued policy'),
+);
+Then(
+  'the PolicyCenter home page should be displayed',
+  async ({ page }) => {
+    await expect(page).not.toHaveURL(/login/i);
+
+    console.log('PolicyCenter login completed.');
+    console.log('Current URL:', page.url());
+  },
 );
