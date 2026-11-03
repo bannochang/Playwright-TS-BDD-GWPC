@@ -1,7 +1,10 @@
-import { getIssuedPolicyNumber } from '../../utils/results.utils';
+import {
+  getIssuedPolicyNumber,
+  savePolicyResult,
+} from '../../utils/results.utils';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { AccountPage } from '../../pages/AccountPage';
 import { AccountLocators } from '../../locators/AccountLocators';
@@ -26,6 +29,17 @@ interface AccountTestData {
   Account: {
     Company: {
       CompanyName: string;
+      OrganizationName: string;
+      AddressLine1: string;
+      City: string;
+      County: string;
+      State: string;
+      PostalCode: string;
+      Country: string;
+      "Address Type": string;
+      "Organization Type": string;
+      FEIN: string;
+      "Producer Code": string;
     };
   };
 }
@@ -33,7 +47,20 @@ interface AccountTestData {
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
+function requiredString(
+  record: Record<string, unknown>,
+  field: string,
+): string {
+  const value = record[field];
 
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(
+      `Invalid test data: Account.Company.${field} must be a non-empty string.`,
+    );
+  }
+
+  return value;
+}
 
 async function loadLoginTestData(): Promise<LoginTestData> {
   let contents: string;
@@ -99,28 +126,58 @@ async function loadAccountTestData(): Promise<AccountTestData> {
 
   const company = account.Company;
 
-  if (
-    typeof company.CompanyName !== 'string' ||
-    !company.CompanyName.trim()
-  ) {
-    throw new Error(
-      'Invalid test data: Account.Company.CompanyName must be a non-empty string.',
-    );
+  const requiredFields = [
+    'CompanyName',
+    'OrganizationName',
+    'AddressLine1',
+    'City',
+    'County',
+    'State',
+    'PostalCode',
+    'Country',
+    'Address Type',
+    'Organization Type',
+    'FEIN',
+    'Producer Code',
+  ] as const;
+
+  for (const field of requiredFields) {
+    if (
+      typeof company[field] !== 'string' ||
+      !company[field].trim()
+    ) {
+      throw new Error(
+        `Invalid test data: Account.Company.${field} must be a non-empty string.`,
+      );
+    }
   }
 
   return {
     Account: {
       Company: {
-        CompanyName: company.CompanyName,
+        CompanyName: requiredString(company, 'CompanyName'),
+        OrganizationName: requiredString(company, 'OrganizationName'),
+        AddressLine1: requiredString(company, 'AddressLine1'),
+        City: requiredString(company, 'City'),
+        County: requiredString(company, 'County'),
+        State: requiredString(company, 'State'),
+        PostalCode: requiredString(company, 'PostalCode'),
+        Country: requiredString(company, 'Country'),
+        'Address Type': requiredString(company, 'Address Type'),
+        'Organization Type': requiredString(company, 'Organization Type'),
+        FEIN: requiredString(company, 'FEIN'),
+        'Producer Code': requiredString(company, 'Producer Code'),
       },
     },
   };
 }
 
 function workflowStepPending(step: string): never {
-  throw new Error(
+  test.skip(
+    true,
     `PolicyCenter workflow step is not automated yet: "${step}". Implement it after confirming the corresponding page fields and actions.`,
   );
+  throw new Error(`PolicyCenter workflow step was not skipped: "${step}".`);
 }
 
 Given('I am logged in to Guidewire PolicyCenter', async ({ page }) => {
@@ -145,7 +202,7 @@ When('the user opens the Account menu', async ({ page }) => {
   const accountDropdown = page.locator(
     '#TabBar-AccountTab > .gw-action--expand-button'
   );
-  
+
 
   await expect(accountDropdown).toHaveCount(1);
   await expect(accountDropdown).toBeVisible();
@@ -155,11 +212,11 @@ When('the user opens the Account menu', async ({ page }) => {
   console.log('Account menu opened successfully.');
   await page.waitForTimeout(2_000); // Wait for 2 seconds to ensure the menu is fully loaded
 
-  
+
 });
 When('the user selects New Account', async ({ page }) => {
   const newAccount = page.locator(
- '#TabBar-AccountTab-AccountTab_NewAccount > div > div.gw-label'
+    '#TabBar-AccountTab-AccountTab_NewAccount > div > div.gw-label'
   );
 
 
@@ -200,6 +257,35 @@ When('the user selects Company Account', async ({ page }) => {
   await accountPage.selectCompanyAccount();
 
   console.log('Company Account selected successfully.');
+});
+When('the user enters the Company Account details', async ({ page }) => {
+  const accountData = await loadAccountTestData();
+  const accountPage = new AccountPage(page);
+  const companyData = accountData.Account.Company;
+
+  await accountPage.enterCompanyAccountDetails(companyData);
+  await page.pause();
+});
+When('the user clicks the Update button', async ({ page }) => {
+  const accountPage = new AccountPage(page);
+
+  await accountPage.clickUpdateButton();
+
+  console.log('Update button clicked successfully.');
+
+  await page.pause();
+});
+
+Then('the user saves the created Account Number', async ({ page }) => {
+  const accountPage = new AccountPage(page);
+
+  const accountNumber = await accountPage.getAccountNumber();
+
+  await savePolicyResult('TC_ACCOUNT_001', {
+    AccountNumber: accountNumber,
+  });
+
+  console.log('Account Number saved in results.json:', accountNumber);
 });
 
 When('the user starts a new Commercial Auto submission', async ({ }) =>
