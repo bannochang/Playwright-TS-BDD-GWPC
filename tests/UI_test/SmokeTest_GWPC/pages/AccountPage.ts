@@ -190,6 +190,9 @@ export class AccountPage {
 
     await expect(updateButton).toBeVisible();
     await updateButton.click();
+    await expect(
+      this.page.locator(AccountLocators.AccountNumber),
+    ).toBeVisible({ timeout: 30_000 });
     console.log('Update button clicked successfully.');
 
   }

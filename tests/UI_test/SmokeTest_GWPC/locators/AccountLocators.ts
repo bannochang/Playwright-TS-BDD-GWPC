@@ -1,4 +1,8 @@
 export const AccountLocators = {
+  accountMenuArrow: '#TabBar-AccountTab .gw-action--expand-button',
+  newAccountMenuItem:
+    '#TabBar-AccountTab-AccountTab_NewAccount > div > div.gw-label',
+
   companyNameInput:
     '#NewAccount-NewAccountScreen-NewAccountSearchDV-GlobalContactNameInputSet-Name > div > input',
 

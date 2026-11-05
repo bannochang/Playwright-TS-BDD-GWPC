@@ -8,7 +8,7 @@ import { expect, test } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { AccountPage } from '../../pages/AccountPage';
 import { AccountLocators } from '../../locators/AccountLocators';
-
+import { NewSubmission } from '../../pages/newSubmission';
 
 
 const { Given, When, Then } = createBdd();
@@ -199,35 +199,26 @@ Given('I am logged in to Guidewire PolicyCenter', async ({ page }) => {
 });
 
 When('the user opens the Account menu', async ({ page }) => {
-  const accountDropdown = page.locator(
-    '#TabBar-AccountTab > .gw-action--expand-button'
+  const accountMenuArrow = page.locator(AccountLocators.accountMenuArrow);
+  const newAccountMenuItem = page.locator(
+    AccountLocators.newAccountMenuItem,
   );
 
-
-  await expect(accountDropdown).toHaveCount(1);
-  await expect(accountDropdown).toBeVisible();
-
-  await accountDropdown.click();
-
-  console.log('Account menu opened successfully.');
-  await page.waitForTimeout(2_000); // Wait for 2 seconds to ensure the menu is fully loaded
-
-
+  await expect(accountMenuArrow).toBeVisible();
+  await expect(accountMenuArrow).toBeEnabled();
+  await accountMenuArrow.click();
+  await expect(newAccountMenuItem).toBeVisible({ timeout: 10_000 });
 });
 When('the user selects New Account', async ({ page }) => {
-  const newAccount = page.locator(
-    '#TabBar-AccountTab-AccountTab_NewAccount > div > div.gw-label'
+  const newAccountMenuItem = page.locator(
+    AccountLocators.newAccountMenuItem,
   );
 
-
-  await expect(newAccount).toHaveCount(1);
-  await expect(newAccount).toBeVisible();
-
-  await newAccount.click();
-
-  console.log('New Account screen opened successfully.');
-
-  await page.pause();
+  await expect(newAccountMenuItem).toBeVisible();
+  await newAccountMenuItem.click();
+  await expect(
+    page.locator(AccountLocators.companyNameInput),
+  ).toBeVisible({ timeout: 15_000 });
 });
 When('the user enters the company name', async ({ page }) => {
   const accountData = await loadAccountTestData();
@@ -263,8 +254,8 @@ When('the user enters the Company Account details', async ({ page }) => {
   const accountPage = new AccountPage(page);
   const companyData = accountData.Account.Company;
 
+  await accountPage.enterCompanyAccountName(companyData.CompanyName);
   await accountPage.enterCompanyAccountDetails(companyData);
-  await page.pause();
 });
 When('the user clicks the Update button', async ({ page }) => {
   const accountPage = new AccountPage(page);
@@ -272,8 +263,6 @@ When('the user clicks the Update button', async ({ page }) => {
   await accountPage.clickUpdateButton();
 
   console.log('Update button clicked successfully.');
-
-  await page.pause();
 });
 
 Then('the user saves the created Account Number', async ({ page }) => {
@@ -288,9 +277,16 @@ Then('the user saves the created Account Number', async ({ page }) => {
   console.log('Account Number saved in results.json:', accountNumber);
 });
 
-When('the user starts a new Commercial Auto submission', async ({ }) =>
-  workflowStepPending('the user starts a new Commercial Auto submission'),
-);
+When('the user starts a new Commercial Auto submission', async ({ page }) => {
+  const newSubmissionPage = new NewSubmission(page);
+
+  await newSubmissionPage.clickNewSubmission();
+
+  console.log('New Commercial Auto submission initiated.');
+  await newSubmissionPage.selectProduct();
+
+  console.log('Policy Info Screen displayed.');
+});
 
 When('the user selects an effective date', async ({ }) =>
   workflowStepPending('the user selects an effective date'),
