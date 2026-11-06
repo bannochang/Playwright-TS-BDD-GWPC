@@ -35,6 +35,7 @@ export class AccountPage {
     await expect(createAccountMenuToggle).toBeEnabled();
     if (await createAccountMenuToggle.getAttribute('aria-expanded') !== 'true') {
       await createAccountMenuToggle.click();
+      await createAccountMenuToggle.click();
     }
     await expect(createAccountMenuToggle).toHaveAttribute(
       'aria-expanded',
