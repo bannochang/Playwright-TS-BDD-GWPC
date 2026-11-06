@@ -8,7 +8,7 @@ import { expect, test } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { AccountPage } from '../../pages/AccountPage';
 import { AccountLocators } from '../../locators/AccountLocators';
-import { NewSubmission } from '../../pages/newSubmission';
+import { NewSubmission, PolicyInfo } from '../../pages/newSubmission';
 
 
 const { Given, When, Then } = createBdd();
@@ -285,7 +285,12 @@ When('the user starts a new Commercial Auto submission', async ({ page }) => {
   console.log('New Commercial Auto submission initiated.');
   await newSubmissionPage.selectProduct();
 
+  const policyInfoPage = new PolicyInfo(page);
+  await policyInfoPage.selectOrganizationType();
+
   console.log('Policy Info Screen displayed.');
+
+  
 });
 
 When('the user selects an effective date', async ({ }) =>

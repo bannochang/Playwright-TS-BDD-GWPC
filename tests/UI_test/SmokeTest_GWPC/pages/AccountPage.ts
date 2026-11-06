@@ -23,25 +23,49 @@ export class AccountPage {
   }
 
   async clickCreateAccount(): Promise<void> {
-    const createAccountButton = this.page.getByRole(
-      'button',
-      { name: 'Create New Account', exact: true }
+    const createAccountMenuToggle = this.page.locator(
+      AccountLocators.createAccountMenuToggle,
     );
-
-    await expect(createAccountButton).toBeVisible();
-    await createAccountButton.click();
-
-    console.log('Create New Account button clicked.');
-  }
-
-  async selectCompanyAccount(): Promise<void> {
     const companyOption = this.page.getByRole('menuitem', {
       name: 'Company',
       exact: true,
     });
 
+    await expect(createAccountMenuToggle).toBeVisible();
+    await expect(createAccountMenuToggle).toBeEnabled();
+    if (await createAccountMenuToggle.getAttribute('aria-expanded') !== 'true') {
+      await createAccountMenuToggle.click();
+    }
+    await expect(createAccountMenuToggle).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expect(companyOption).toBeVisible({ timeout: 10_000 });
+
+    console.log('Create New Account menu opened.');
+  }
+
+  async selectCompanyAccount(): Promise<void> {
+    const createAccountMenuToggle = this.page.locator(
+      AccountLocators.createAccountMenuToggle,
+    );
+    const companyOption = this.page.getByRole('menuitem', {
+      name: 'Company',
+      exact: true,
+    });
+
+    if (await createAccountMenuToggle.getAttribute('aria-expanded') !== 'true') {
+      await createAccountMenuToggle.click();
+      await expect(createAccountMenuToggle).toHaveAttribute(
+        'aria-expanded',
+        'true',
+      );
+    }
     await expect(companyOption).toBeVisible({ timeout: 15_000 });
     await companyOption.click();
+    await expect(
+      this.page.locator(AccountLocators.companyAccountNameInput),
+    ).toBeVisible({ timeout: 15_000 });
 
     console.log('Company Account option selected successfully.');
   }
@@ -187,12 +211,48 @@ export class AccountPage {
     const updateButton = this.page.locator(
       AccountLocators.UpdateButton
     );
+    const accountNumber = this.page.locator(AccountLocators.AccountNumber);
+    const matchingContactsHeading = this.page.getByRole('heading', {
+      name: 'Matching Contacts',
+      exact: true,
+    });
 
     await expect(updateButton).toBeVisible();
     await updateButton.click();
-    await expect(
-      this.page.locator(AccountLocators.AccountNumber),
-    ).toBeVisible({ timeout: 30_000 });
+
+    await expect.poll(async () => {
+      if (await accountNumber.isVisible()) {
+        return 'created';
+      }
+      if (await matchingContactsHeading.isVisible()) {
+        return 'matching';
+      }
+      return 'pending';
+    }, { timeout: 30_000 }).not.toBe('pending');
+
+    if (await matchingContactsHeading.isVisible()) {
+      await this.page.getByRole('link', {
+        name: 'Return to Create account',
+        exact: true,
+      }).click();
+      await expect(
+        this.page.getByRole('heading', { name: 'Create account', exact: true }),
+      ).toBeVisible();
+
+      const companyNameInput = this.page.locator(
+        AccountLocators.companyAccountNameInput,
+      );
+      const feinInput = this.page.locator(AccountLocators.FEINInput);
+      const timestamp = Date.now();
+      const companyName = await companyNameInput.inputValue();
+      const uniqueFein = `98-${String(timestamp % 10_000_000).padStart(7, '0')}`;
+
+      await companyNameInput.fill(`${companyName} Test ${timestamp}`);
+      await feinInput.fill(uniqueFein);
+      await this.page.locator(AccountLocators.UpdateButton).click();
+    }
+
+    await expect(accountNumber).toBeVisible({ timeout: 30_000 });
     console.log('Update button clicked successfully.');
 
   }

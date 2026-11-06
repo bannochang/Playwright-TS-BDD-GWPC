@@ -1,5 +1,6 @@
 export const AccountLocators = {
   accountMenuArrow: '#TabBar-AccountTab .gw-action--expand-button',
+  
   newAccountMenuItem:
     '#TabBar-AccountTab-AccountTab_NewAccount > div > div.gw-label',
 
@@ -9,7 +10,8 @@ export const AccountLocators = {
   searchButton:
     '#NewAccount-NewAccountScreen-NewAccountSearchDV-SearchAndResetInputSet-SearchLinksInputSet-Search > div',
 
-  createAccountButton: 'button:has-text("Create New Account")',
+  createAccountMenuToggle:
+    '#NewAccount-NewAccountScreen-NewAccountButton > .gw-action--inner',
 
   companyOption: '#NewAccount-NewAccountScreen-NewAccountButton-NewAccount_Company [role="menuitem"]',
 
