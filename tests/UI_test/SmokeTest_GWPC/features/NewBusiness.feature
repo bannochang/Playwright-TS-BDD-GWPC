@@ -17,3 +17,4 @@ Scenario: Create a new Commercial Auto submission
   And the user clicks the Update button
   Then the user saves the created Account Number
   When the user starts a new Commercial Auto submission
+  And the user enters the commercial account details
