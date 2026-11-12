@@ -8,6 +8,8 @@ import { expect, test } from '@playwright/test';
 import { createBdd } from 'playwright-bdd';
 import { AccountPage } from '../../pages/AccountPage';
 import { AccountLocators } from '../../locators/AccountLocators';
+import { CommercialAutoCoveragesPage } from '../../pages/CommercialAutoCoveragesPage';
+import { GoCommercialAutoPage } from '../../pages/GoCommercialAutoPage';
 import { NewSubmission, PolicyInfo } from '../../pages/newSubmission';
 
 
@@ -53,6 +55,20 @@ interface AccountTestData {
 interface GoCommercialAutoTestData {
   GoCommercialAuto: Record<string, string>;
 }
+interface LesseeCompanyTestData {
+  LesseeCompany: {
+    Name: string;
+    AddressLine1: string;
+    City: string;
+    County: string;
+    State: string;
+    PostalCode: string;
+    Country: string;
+    "Address Type": string;
+  };
+}
+type CoverageValue = string | boolean | number;
+type CoverageTestData = Record<string, CoverageValue>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -146,6 +162,8 @@ async function loadAccountTestData(): Promise<AccountTestData> {
     'PostalCode',
     'Country',
     'Address Type',
+    'AddressType',
+    'Address Type',
     'Organization Type',
     'FEIN',
     'Producer Code',
@@ -206,6 +224,75 @@ async function loadGoCommercialAutoTestData(): Promise<GoCommercialAutoTestData>
   return { GoCommercialAuto: details };
 }
 
+async function loadLesseeCompanyTestData(): Promise<LesseeCompanyTestData> {
+  const contents = await readFile(testDataPath, 'utf8');
+  const parsed: unknown = JSON.parse(contents);
+
+  if (!isRecord(parsed) || !isRecord(parsed.LesseeCompany)) {
+    throw new Error('Invalid test data: LesseeCompany section is missing.');
+  }
+
+  const requiredFields = [
+    'Name',
+    'AddressLine1',
+    'City',
+    'County',
+    'State',
+    'PostalCode',
+    'Country',
+    'Address Type',
+  ] as const;
+  const companyData: Record<string, string> = {};
+
+  for (const field of requiredFields) {
+    companyData[field] = requiredString(parsed.LesseeCompany, field);
+  }
+
+  return {
+    LesseeCompany: {
+      Name: companyData.Name,
+      AddressLine1: companyData.AddressLine1,
+      City: companyData.City,
+      County: companyData.County,
+      State: companyData.State,
+      PostalCode: companyData.PostalCode,
+      Country: companyData.Country,
+      'Address Type': companyData['Address Type'],
+    },
+  };
+}
+
+async function loadCoverageTestData(section: string): Promise<CoverageTestData> {
+  const contents = await readFile(testDataPath, 'utf8');
+  const parsed: unknown = JSON.parse(contents);
+
+  if (!isRecord(parsed) || !isRecord(parsed[section])) {
+    throw new Error(`Invalid test data: ${section} section is missing.`);
+  }
+
+  const coverages: CoverageTestData = {};
+  for (const [field, value] of Object.entries(parsed[section])) {
+    if (typeof value === 'string') {
+      if (!value.trim()) {
+        throw new Error(`Invalid test data: ${section}.${field} must not be empty.`);
+      }
+      coverages[field] = value;
+    } else if (typeof value === 'boolean' || typeof value === 'number') {
+      coverages[field] = value;
+    } else {
+      throw new Error(
+        `Invalid test data: ${section}.${field} must be a string, boolean, or number.`,
+      );
+    }
+  }
+
+  if (Object.keys(coverages).length === 0) {
+    throw new Error(`Invalid test data: ${section} section is empty.`);
+  }
+
+  return coverages;
+}
+
 function workflowStepPending(step: string): never {
   test.skip(
     true,
@@ -215,6 +302,7 @@ function workflowStepPending(step: string): never {
 }
 
 Given('I am logged in to Guidewire PolicyCenter', async ({ page }) => {
+  test.setTimeout(90_000);
   const loginData = await loadLoginTestData();
 
   await page.goto(applicationUrl, { waitUntil: 'domcontentloaded' });
@@ -227,9 +315,9 @@ Given('I am logged in to Guidewire PolicyCenter', async ({ page }) => {
     .fill(loginData.Login.Password);
   await page.getByRole('button', { name: 'Log In', exact: true }).click();
 
-  await expect(
-    page.getByRole('button', { name: 'Log In', exact: true }),
-  ).toBeHidden({ timeout: 60_000 });
+  await expect(page.locator(AccountLocators.accountMenuArrow)).toBeVisible({
+    timeout: 60_000,
+  });
 });
 
 When('the user opens the Account menu', async ({ page }) => {
@@ -331,9 +419,27 @@ When('the user selects an effective date', async ({ page }) => {
 
 When('the user enters the commercial account details', async ({ page }) => {
   const testData = await loadGoCommercialAutoTestData();
-  const policyInfoPage = new PolicyInfo(page);
-  await policyInfoPage.enterCommercialAutoDetails(
-    testData.GoCommercialAuto,
+  const goCommercialAutoPage = new GoCommercialAutoPage(page);
+  await goCommercialAutoPage.enterDetails(testData.GoCommercialAuto);
+});
+When('the user enters the Coverage details', async ({ page }) => {
+  const standardCoverages = await loadCoverageTestData(
+    'CommercialAutoStandardCoverages',
+  );
+  const additionalCoverages = await loadCoverageTestData(
+    'CommercialAutoAdditionalCoverages',
+  );
+  const lesseeCompanyData = await loadLesseeCompanyTestData();
+  const coveragesPage = new CommercialAutoCoveragesPage(page);
+
+  await coveragesPage.enterCoverageDetails(
+    'Commercial Auto Standard Coverages',
+    standardCoverages,
+  );
+  await coveragesPage.enterCoverageDetails(
+    'Commercial Auto Additional Coverages',
+    additionalCoverages,
+    lesseeCompanyData.LesseeCompany,
   );
 });
 
